@@ -6,4 +6,7 @@ uploads/
 .env
 .ipynb_checkpoints/
 .vscode/
-.DS_Storedataset/Monday-WorkingHours.pcap_ISCX.csv
+.DS_Store
+dataset/Monday-WorkingHours.pcap_ISCX.csv
+dataset/Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv
+
