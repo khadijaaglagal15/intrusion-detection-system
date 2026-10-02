@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel — Traffic Capture Triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f4f7fb;
+    --panel: #ffffff;
+    --panel-2: #f1f5fb;
+    --line: #e2e2e2;
+    --text: #222222;
+    --muted: #6c757d;
+    --amber: #ec9f00;
+    --cyan: #025add;
+    --cyan-soft: #0c6de0;
+    --danger: #ff4d15;
+    --radius: 4px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #eaf1fb 0%, var(--bg) 100%);
+    background-image:
+      linear-gradient(rgba(2,90,221,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(2,90,221,0.06) 1px, transparent 1px),
+      linear-gradient(180deg, #eaf1fb 0%, var(--bg) 100%);
+    background-size: 48px 48px, 48px 48px, 100% 100%;
+    background-position: center, center, center;
+    background-attachment: fixed, fixed, fixed;
+  }
+
+  body::before{
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(2,90,221,0.05) 0%, transparent 78%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 28px 32px;
+  }
+
+  .mark{
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .brand{
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .brand span{
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  main{
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 24px 80px;
+  }
+
+  .hero{
+    max-width: 620px;
+    text-align: center;
+    margin: 24px 0 44px;
+  }
+
+  h1{
+    font-size: clamp(30px, 4.4vw, 44px);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+  }
+
+  .hero p{
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ---------- Radar dropzone ---------- */
+
+  .capture-shell{
+    width: min(360px, 82vw);
+    aspect-ratio: 1;
+    position: relative;
+    margin-bottom: 34px;
+  }
+
+  .rings{
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      repeating-radial-gradient(circle at center,
+        transparent 0, transparent calc(50% / 4 - 1px),
+        var(--line) calc(50% / 4 - 1px), var(--line) calc(50% / 4));
+    opacity: 0.9;
+  }
+
+  .sweep{
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(2,90,221,0.22), transparent 26%);
+    animation: rotate 5.5s linear infinite;
+    mix-blend-mode: multiply;
+  }
+
+  @keyframes rotate{
+    to{ transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .sweep{ animation: none; }
+  }
+
+  .dropzone{
+    position: absolute;
+    inset: 10%;
+    border-radius: 50%;
+    border: 1px dashed #b9c9e0;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .dropzone:hover,
+  .dropzone.drag{
+    border-color: var(--cyan);
+    background: rgba(2, 90, 221, 0.06);
+  }
+
+  .dropzone:focus-visible{
+    outline: 2px solid var(--cyan);
+    outline-offset: 4px;
+  }
+
+  .dropzone svg{
+    width: 30px;
+    height: 30px;
+    stroke: var(--cyan);
+    transition: transform 0.2s ease;
+  }
+
+  .dropzone.drag svg{
+    transform: translateY(-3px);
+  }
+
+  .dz-title{
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .dz-sub{
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .dz-sub em{
+    font-style: normal;
+    color: var(--cyan);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  input[type="file"]{
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* ---------- File readout ---------- */
+
+  .readout{
+    width: min(420px, 90vw);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 22px;
+    display: none;
+    animation: rise 0.28s ease;
+    box-shadow: 0 4px 18px rgba(2,90,221,0.08);
+  }
+
+  .readout.show{ display: block; }
+
+  @keyframes rise{
+    from{ opacity: 0; transform: translateY(6px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  .readout-top{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .file-name{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 260px;
+  }
+
+  .clear-btn{
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 4px;
+  }
+
+  .clear-btn:hover{ color: var(--danger); }
+
+  .stat-row{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .stat{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 9px 10px;
+  }
+
+  .stat-label{
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .stat-value{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    color: var(--cyan);
+  }
+
+  .columns-line{
+    margin-top: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .columns-line b{ color: var(--text); font-weight: 500; }
+
+  /* ---------- Submit ---------- */
+
+  form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  button.submit{
+    position: relative;
+    font-family: 'Sora', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--cyan);
+    border: none;
+    border-radius: var(--radius);
+    padding: 13px 30px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  }
+
+  button.submit:hover:not(:disabled){
+    transform: translateY(-1px);
+    background: var(--cyan-soft);
+  }
+
+  button.submit:disabled{
+    opacity: 0.7;
+    cursor: progress;
+  }
+
+  button.submit:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 3px;
+  }
+
+  .submit-hint{
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 16px;
+  }
+
+  .error-text{
+    color: var(--danger);
+  }
+
+  /* ---------- Results panel ---------- */
+
+  .results{
+    width: min(560px, 92vw);
+    margin-top: 36px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    display: none;
+    animation: rise 0.3s ease;
+    box-shadow: 0 4px 18px rgba(2,90,221,0.08);
+  }
+
+  .results.show{ display: block; }
+
+  .results-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .results-title{
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .verdict-badge{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+  }
+
+  .verdict-badge.clean{
+    color: var(--cyan);
+    border-color: rgba(2,90,221,0.35);
+    background: rgba(2,90,221,0.08);
+  }
+
+  .verdict-badge.alert{
+    color: var(--danger);
+    border-color: rgba(255,77,21,0.35);
+    background: rgba(255,77,21,0.08);
+  }
+
+  .results-stat-row{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .results-stat{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 12px;
+    text-align: center;
+  }
+
+  .results-stat .num{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  .results-stat.total .num{ color: var(--text); }
+  .results-stat.normal .num{ color: var(--cyan); }
+  .results-stat.attack .num{ color: var(--danger); }
+
+  .results-stat .lbl{
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .flow-list{
+    max-height: 220px;
+    overflow-y: auto;
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+  }
+
+  .flow-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+
+  .flow-row + .flow-row{
+    border-top: 1px solid var(--line);
+  }
+
+  .flow-idx{ color: var(--muted); }
+
+  .flow-tag{
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .flow-tag.normal{
+    color: var(--cyan);
+    background: rgba(2,90,221,0.1);
+  }
+
+  .flow-tag.attack{
+    color: var(--danger);
+    background: rgba(255,77,21,0.1);
+  }
+
+  .flow-list-more{
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  footer{
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 20px;
+    font-size: 11.5px;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <svg class="mark" viewBox="0 0 24 24" fill="none">
+      <path d="M2 12 L8 12 L10 6 L14 18 L16 12 L22 12" stroke="#025add" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="brand">Sentinel <span>· traffic triage</span></div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Read the wire before it reads you.</h1>
+      <p>Drop a captured traffic log and the model returns a verdict on every flow inside it — no manual review needed.</p>
+    </div>
+
+    <form id="predictForm" action="/predict_csv" method="POST" enctype="multipart/form-data">
+
+      <div class="capture-shell">
+        <div class="rings"></div>
+        <div class="sweep"></div>
+        <label class="dropzone" id="dropzone" for="fileInput" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 16V4M12 4L7 9M12 4l5 5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="dz-title" id="dzTitle">Drop capture here</div>
+          <div class="dz-sub">or <em>browse .csv</em></div>
+        </label>
+        <input type="file" id="fileInput" name="file" accept=".csv" required>
+      </div>
+
+      <div class="readout" id="readout">
+        <div class="readout-top">
+          <div class="file-name" id="fileName"></div>
+          <button type="button" class="clear-btn" id="clearBtn">clear</button>
+        </div>
+        <div class="stat-row">
+          <div class="stat">
+            <div class="stat-label">flows</div>
+            <div class="stat-value" id="statRows">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">fields</div>
+            <div class="stat-value" id="statCols">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">size</div>
+            <div class="stat-value" id="statSize">—</div>
+          </div>
+        </div>
+        <div class="columns-line" id="columnsLine"></div>
+      </div>
+
+      <button type="submit" class="submit" id="submitBtn" disabled>Analyze capture</button>
+      <div class="submit-hint" id="hint">Add a CSV to begin</div>
+
+    </form>
+
+    <!-- ---------- Prediction results panel ---------- -->
+    <section class="results" id="results">
+      <div class="results-head">
+        <div class="results-title">Analysis result</div>
+        <div class="verdict-badge" id="verdictBadge">—</div>
+      </div>
+
+      <div class="results-stat-row">
+        <div class="results-stat total">
+          <div class="num" id="resTotal">0</div>
+          <div class="lbl">Flows</div>
+        </div>
+        <div class="results-stat normal">
+          <div class="num" id="resNormal">0</div>
+          <div class="lbl">Normal</div>
+        </div>
+        <div class="results-stat attack">
+          <div class="num" id="resAttack">0</div>
+          <div class="lbl">Attacks</div>
+        </div>
+      </div>
+
+      <div class="flow-list" id="flowList"></div>
+      <div class="flow-list-more" id="flowListMore"></div>
+    </section>
+
+  </main>
+
+  <footer>Accepted format: .csv &nbsp;·&nbsp; files are sent to the model for a single prediction pass</footer>
+
+  <script>
+    const dropzone   = document.getElementById('dropzone');
+    const fileInput  = document.getElementById('fileInput');
+    const readout    = document.getElementById('readout');
+    const fileName   = document.getElementById('fileName');
+    const statRows   = document.getElementById('statRows');
+    const statCols   = document.getElementById('statCols');
+    const statSize   = document.getElementById('statSize');
+    const columnsLine= document.getElementById('columnsLine');
+    const clearBtn   = document.getElementById('clearBtn');
+    const submitBtn  = document.getElementById('submitBtn');
+    const hint       = document.getElementById('hint');
+    const dzTitle    = document.getElementById('dzTitle');
+    const form       = document.getElementById('predictForm');
+
+    // Results panel elements
+    const results       = document.getElementById('results');
+    const verdictBadge  = document.getElementById('verdictBadge');
+    const resTotal      = document.getElementById('resTotal');
+    const resNormal     = document.getElementById('resNormal');
+    const resAttack     = document.getElementById('resAttack');
+    const flowList      = document.getElementById('flowList');
+    const flowListMore  = document.getElementById('flowListMore');
+
+    const MAX_PREVIEW_BYTES = 5 * 1024 * 1024; // 5MB — beyond this, skip content parsing
+    const MAX_ROWS_SHOWN = 25; // cap the number of individual flow rows rendered
+
+    function formatSize(bytes){
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function resetReadout(){
+      readout.classList.remove('show');
+      submitBtn.disabled = true;
+      hint.textContent = 'Add a CSV to begin';
+      hint.classList.remove('error-text');
+      dzTitle.textContent = 'Drop capture here';
+      results.classList.remove('show');
+    }
+
+    function showFile(file){
+      fileName.textContent = file.name;
+      statSize.textContent = formatSize(file.size);
+      dzTitle.textContent = 'Capture loaded';
+      hint.classList.remove('error-text');
+      results.classList.remove('show');
+
+      if (!file.name.toLowerCase().endsWith('.csv')){
+        hint.textContent = 'That file isn\u2019t a .csv \u2014 pick a valid capture';
+        hint.classList.add('error-text');
+        submitBtn.disabled = true;
+        readout.classList.remove('show');
+        return;
+      }
+
+      if (file.size > MAX_PREVIEW_BYTES){
+        statRows.textContent = 'n/a';
+        statCols.textContent = 'n/a';
+        columnsLine.textContent = 'File too large to preview \u2014 it will still be sent for analysis.';
+        readout.classList.add('show');
+        submitBtn.disabled = false;
+        hint.textContent = 'Ready to send';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result;
+        const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim().length > 0);
+        const header = lines[0] ? lines[0].split(',').map(h => h.trim()).filter(Boolean) : [];
+        const rowCount = Math.max(lines.length - 1, 0);
+
+        statRows.textContent = rowCount.toLocaleString();
+        statCols.textContent = header.length;
+
+        if (header.length){
+          const shown = header.slice(0, 5).join(', ');
+          const extra = header.length > 5 ? ` +${header.length - 5} more` : '';
+          columnsLine.innerHTML = '<b>fields:</b> ' + shown + extra;
+        } else {
+          columnsLine.textContent = 'Could not read a header row.';
+        }
+
+        readout.classList.add('show');
+        submitBtn.disabled = false;
+        hint.textContent = 'Ready to send';
+      };
+      reader.onerror = () => {
+        columnsLine.textContent = 'Could not preview this file, but it can still be submitted.';
+        readout.classList.add('show');
+        submitBtn.disabled = false;
+        hint.textContent = 'Ready to send';
+      };
+      reader.readAsText(file);
+    }
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) showFile(fileInput.files[0]);
+    });
+
+    dropzone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(evt =>
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('drag');
+      })
+    );
+
+    ['dragleave', 'drop'].forEach(evt =>
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('drag');
+      })
+    );
+
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files[0]){
+        fileInput.files = dt.files;
+        showFile(dt.files[0]);
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      resetReadout();
+    });
+
+    // ---------- Render the prediction results ----------
+    // Actual JSON shape returned by the Flask /predict_csv route:
+    // {
+    //   "total_flows": 1200,
+    //   "normal": 1153,
+    //   "attacks": 47,
+    //   "predictions": [
+    //     { "Prediction": 0, "Result": "Normal" },
+    //     { "Prediction": 1, "Result": "Attack" },
+    //     ...
+    //   ]
+    // }
+    function renderResults(data){
+      const total  = data.total_flows ?? 0;
+      const normal = data.normal ?? 0;
+      const attack = data.attacks ?? 0;
+
+      resTotal.textContent  = total.toLocaleString();
+      resAttack.textContent = attack.toLocaleString();
+      resNormal.textContent = normal.toLocaleString();
+
+      if (attack > 0){
+        verdictBadge.textContent = 'THREATS DETECTED';
+        verdictBadge.className = 'verdict-badge alert';
+      } else {
+        verdictBadge.textContent = 'CLEAN';
+        verdictBadge.className = 'verdict-badge clean';
+      }
+
+      flowList.innerHTML = '';
+      if (Array.isArray(data.predictions)){
+        const rows = data.predictions.slice(0, MAX_ROWS_SHOWN);
+        rows.forEach((item, i) => {
+          const label = item.Result ?? (item.Prediction === 1 ? 'Attack' : 'Normal');
+          const isAttack = label.toLowerCase() === 'attack';
+          const row = document.createElement('div');
+          row.className = 'flow-row';
+          row.innerHTML = `
+            <span class="flow-idx">flow #${i + 1}</span>
+            <span class="flow-tag ${isAttack ? 'attack' : 'normal'}">${label}</span>
+          `;
+          flowList.appendChild(row);
+        });
+        flowListMore.textContent = data.predictions.length > MAX_ROWS_SHOWN
+          ? `+ ${data.predictions.length - MAX_ROWS_SHOWN} more flows analyzed`
+          : '';
+      }
+
+      results.classList.add('show');
+      results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Scanning traffic…';
+      hint.textContent = 'Sending capture to the model';
+      hint.classList.remove('error-text');
+      results.classList.remove('show');
+
+      try {
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+
+        if (!contentType.includes('application/json')){
+          // Backend returned a plain-text error (e.g. "Missing columns: [...]")
+          const text = await response.text();
+          throw new Error(text || ('Server responded with ' + response.status));
+        }
+
+        const data = await response.json();
+
+        if (!response.ok){
+          throw new Error(data.error || 'Server responded with ' + response.status);
+        }
+
+        renderResults(data);
+        hint.textContent = 'Analysis complete';
+      } catch (err){
+        hint.textContent = err.message || 'Something went wrong while analyzing the capture.';
+        hint.classList.add('error-text');
+        console.error(err);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Analyze capture';
+      }
+    });
+  </script>
+
+</body>
+</html>

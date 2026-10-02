@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Intrusion Detection System</title>
+
+<meta name="description"
+ content="Machine Learning-Based Network Intrusion Detection System">
+
+  <!-- Favicons -->
+
+  <link href="static/assets/images/favicon.png" rel="icon">
+  <link href="static/assets/images/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Raleway:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+
+  <!-- Vendor CSS -->
+
+  <link href="static/assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="static/assets/stylesheets/font-awesome.min.css" rel="stylesheet">
+  <link href="static/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+  <link href="static/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="static/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="static/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Main CSS -->
+
+  <link href="static/assets/stylesheets/styles.css" rel="stylesheet">
+
+  <style>
+
+    /* =====================================================
+       HOME - INTRUSION DETECTION
+    ===================================================== */
+
+    .hero-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .hero-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 13px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .hero-btn-primary {
+      background: #ffffff;
+      color: #111827;
+    }
+
+    .hero-btn-primary:hover {
+      transform: translateY(-3px);
+      color: #111827;
+      box-shadow: 0 8px 25px rgba(255,255,255,0.18);
+    }
+
+    .hero-btn-outline {
+      border: 1px solid rgba(255,255,255,0.45);
+      color: #ffffff;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .hero-btn-outline:hover {
+      background: rgba(255,255,255,0.12);
+      transform: translateY(-3px);
+      color: #ffffff;
+    }
+
+    /* CSV Analysis Card */
+
+    .csv-analysis-section {
+      padding: 80px 0;
+    }
+
+    .csv-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      padding: 45px;
+      background: linear-gradient(
+        135deg,
+        rgba(15, 28, 45, 0.98),
+        rgba(10, 18, 30, 0.98)
+      );
+      border: 1px solid rgba(255,255,255,0.09);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .csv-card::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -100px;
+      top: -120px;
+      border-radius: 50%;
+      background: rgba(82, 227, 194, 0.08);
+      pointer-events: none;
+    }
+
+    .csv-icon {
+      width: 65px;
+      height: 65px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: rgba(82, 227, 194, 0.10);
+      border: 1px solid rgba(82, 227, 194, 0.20);
+      margin-bottom: 22px;
+    }
+
+    .csv-icon i {
+      font-size: 30px;
+      color: #52e3c2;
+    }
+
+    .csv-card h3 {
+      color: #ffffff;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .csv-card p {
+      color: #aab7c7;
+      line-height: 1.8;
+      max-width: 680px;
+      margin-bottom: 25px;
+    }
+
+    .csv-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 25px;
+      border-radius: 8px;
+      background: #52e3c2;
+      color: #071016;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .csv-button:hover {
+      transform: translateY(-3px);
+      color: #071016;
+      box-shadow: 0 8px 25px rgba(82,227,194,0.20);
+    }
+
+    .csv-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 25px;
+    }
+
+    .csv-feature {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #93a4b7;
+      font-size: 13px;
+    }
+
+    .csv-feature i {
+      color: #52e3c2;
+    }
+
+    /* Prediction section */
+
+    .prediction-intro {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 40px;
+    }
+
+    .prediction-intro p {
+      color: #8d9caf;
+      line-height: 1.8;
+    }
+
+    .manual-box {
+      max-width: 850px;
+      margin: auto;
+      padding: 35px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .manual-box label {
+      margin-bottom: 7px;
+      font-weight: 500;
+    }
+
+    .manual-box .form-control {
+      margin-bottom: 16px;
+    }
+
+    .predict-button {
+      margin-top: 10px;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      background: #52e3c2;
+      color: #071016;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .predict-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(82,227,194,0.20);
+    }
+
+    @media (max-width: 768px) {
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .csv-card {
+        padding: 30px 22px;
+      }
+
+      .manual-box {
+        padding: 25px 18px;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+  <header id="header" class="header d-flex align-items-center sticked stikcy-menu">
+
+```
+<div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+
+  <a href="/" class="logo d-flex align-items-center">
+    <img src="static/assets/images/cyber1.png" alt="Intrusion Detection Logo">
+  </a>
+
+  <nav id="navbar" class="navbar">
+
+    <ul>
+
+      <li>
+        <a href="/">Home</a>
+      </li>
+
+      
+
+        
+
+      </li>
+
+      <li>
+        <a href="/about">About</a>
+      </li>
+
+      
+
+    
+      
+
+  </nav>
+
+  <a href="/login" class="btn-get-started hide-on-mobile">
+    Signout
+  </a>
+
+  <button id="darkmode-button">
+    <i class="bi bi-moon-fill"></i>
+  </button>
+
+  <i class="mobile-nav-toggle mobile-nav-show bi bi-list"></i>
+  <i class="mobile-nav-toggle mobile-nav-hide d-none bi bi-x"></i>
+
+</div>
+```
+
+  </header>
+
+  <!-- =====================================================
+       HERO
+  ====================================================== -->
+
+  <section id="hero" class="hero sticked-header-offset">
+
+```
+<div id="particles-js"></div>
+<div id="repulse-circle-div"></div>
+
+<div class="container position-relative">
+
+  <div class="row gy-5 aos-init aos-animate">
+
+    <div class="col-lg-7 offset-lg-5 dark-bg order-lg-1 d-flex flex-column justify-content-start text-left caption">
+
+      <h2 data-aos="fade-up">
+        Welcome
+        <span>to Dashboard</span>
+        <span class="circle" data-aos="fade-right" data-aos-delay="800">.</span>
+      </h2>
+
+      <p data-aos="fade-up" data-aos-delay="400">
+        Machine Learning-Based Intrusion Detection System
+      </p>
+
+      <p data-aos="fade-up" data-aos-delay="500">
+        Detect suspicious network traffic using intelligent machine learning models.
+      </p>
+
+
+      <!-- HERO BUTTONS -->
+
+      <div class="hero-actions" data-aos="fade-up" data-aos-delay="600">
+
+        <a href="#manual-prediction" class="hero-btn hero-btn-primary">
+          <i class="bi bi-shield-check"></i>
+          Manual Prediction
+        </a>
+
+        <a href="/upload" class="hero-btn hero-btn-outline">
+          <i class="bi bi-cloud-arrow-up"></i>
+          Import CSV
+        </a>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+```
+
+  </section>
+
+  <!-- =====================================================
+       MAIN
+  ====================================================== -->
+
+  <main id="main">
+
+```
+<!-- =====================================================
+     CSV ANALYSIS
+====================================================== -->
+
+<section class="csv-analysis-section">
+
+  <div class="container">
+
+    <div class="csv-card" data-aos="fade-up">
+
+      <div class="csv-icon">
+        <i class="bi bi-file-earmark-spreadsheet"></i>
+      </div>
+
+      <h3>
+        Analyze Network Traffic
+      </h3>
+
+      <p>
+        Upload a CSV file containing network traffic flows and let the
+        Machine Learning model analyze the data automatically.
+        The system processes the flows and identifies potentially
+        malicious traffic.
+      </p>
+
+      <a href="/upload" class="csv-button">
+        <i class="bi bi-upload"></i>
+        Import Network Traffic
+      </a>
+
+
+      <div class="csv-features">
+
+        <div class="csv-feature">
+          <i class="bi bi-check-circle-fill"></i>
+          CSV files
+        </div>
+
+        <div class="csv-feature">
+          <i class="bi bi-check-circle-fill"></i>
+          Automatic analysis
+        </div>
+
+        <div class="csv-feature">
+          <i class="bi bi-check-circle-fill"></i>
+          Machine Learning
+        </div>
+
+        <div class="csv-feature">
+          <i class="bi bi-check-circle-fill"></i>
+          Attack detection
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     MANUAL PREDICTION
+====================================================== -->
+
+<section id="manual-prediction" class="section">
+
+  <div class="container">
+
+    <div class="section-header">
+
+      <h2>Manual Prediction</h2>
+
+    </div>
+
+
+    <div class="prediction-intro">
+
+      <p>
+        Enter the network traffic characteristics manually.
+        The trained Machine Learning model will classify the traffic
+        as normal or potentially malicious.
+      </p>
+
+    </div>
+
+
+    <div class="manual-box">
+
+      <form action="/predict" method="post">
+
+        <div class="row">
+
+          <div class="col-md-6">
+
+            <label>Flow Duration</label>
+            <input class="form-control" type="text" name="0" required>
+
+            <label>Total Length of Fwd Packets</label>
+            <input class="form-control" type="text" name="1" required>
+
+            <label>Fwd Packet Length Max</label>
+            <input class="form-control" type="text" name="2" required>
+
+            <label>Fwd Packet Length Mean</label>
+            <input class="form-control" type="text" name="3" required>
+
+            <label>Fwd Packet Length Std</label>
+            <input class="form-control" type="text" name="4" required>
+
+            <label>Flow Bytes/s</label>
+            <input class="form-control" type="text" name="5" required>
+
+            <label>Flow Packets/s</label>
+            <input class="form-control" type="text" name="6" required>
+
+            <label>Flow IAT Std</label>
+            <input class="form-control" type="text" name="7" required>
+
+            <label>Flow IAT Max</label>
+            <input class="form-control" type="text" name="8" required>
+
+            <label>Fwd IAT Max</label>
+            <input class="form-control" type="text" name="9" required>
+
+            <label>Fwd Header Length</label>
+            <input class="form-control" type="text" name="10" required>
+
+            <label>Fwd Packets/s</label>
+            <input class="form-control" type="text" name="11" required>
+
+          </div>
+
+
+          <div class="col-md-6">
+
+            <label>Bwd Packets/s</label>
+            <input class="form-control" type="text" name="12" required>
+
+            <label>Max Packet Length</label>
+            <input class="form-control" type="text" name="13" required>
+
+            <label>Packet Length Mean</label>
+            <input class="form-control" type="text" name="14" required>
+
+            <label>Packet Length Std</label>
+            <input class="form-control" type="text" name="15" required>
+
+            <label>Packet Length Variance</label>
+            <input class="form-control" type="text" name="16" required>
+
+            <label>Average Packet Size</label>
+            <input class="form-control" type="text" name="17" required>
+
+            <label>Avg Fwd Segment Size</label>
+            <input class="form-control" type="text" name="18" required>
+
+            <label>Fwd Header Length.1</label>
+            <input class="form-control" type="text" name="19" required>
+
+            <label>Subflow Fwd Bytes</label>
+            <input class="form-control" type="text" name="20" required>
+
+            <label>Init_Win_bytes_forward</label>
+            <input class="form-control" type="text" name="21" required>
+
+            <label>Init_Win_bytes_backward</label>
+            <input class="form-control" type="text" name="22" required>
+
+            <button type="submit" class="predict-button">
+              <i class="bi bi-shield-check"></i>
+              Predict
+            </button>
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</section>
+```
+
+  </main>
+
+  <!-- =====================================================
+       FOOTER
+  ====================================================== -->
+
+  <footer id="footer" class="footer-section">
+
+```
+<div class="container">
+
+  <div class="footer-content pt-5 pb-5">
+
+    <div class="row">
+
+      <div class="col-xl-4 col-lg-4 mb-50">
+
+        <div class="footer-widget">
+
+          <div class="footer-social-icon">
+
+            <span>Follow us</span>
+
+            <a href="#" class="twitter">
+              <i class="bi bi-twitter"></i>
+            </a>
+
+            <a href="#" class="facebook">
+              <i class="bi bi-facebook"></i>
+            </a>
+
+            <a href="#" class="instagram">
+              <i class="bi bi-instagram"></i>
+            </a>
+
+            <a href="#" class="linkedin">
+              <i class="bi bi-linkedin"></i>
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="row">
+
+      <div class="col-xl-6 col-lg-6 text-left text-lg-left">
+
+        <div class="copyright-text">
+
+          <p>
+            © 2026 Intrusion Detection System.
+            All Rights Reserved.
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+```
+
+  </footer>
+
+  <!-- Scroll Top -->
+
+  <a href="#" class="scroll-top d-flex align-items-center justify-content-center active">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+
+  <div id="preloader"></div>
+
+  <!-- Vendor JS -->
+
+  <script src="static/assets/javascripts/jquery.min.js"></script>
+
+  <script src="static/assets/vendor/glightbox/js/glightbox.min.js"></script>
+
+  <script src="static/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <script src="static/assets/vendor/aos/aos.js"></script>
+
+  <script src="static/assets/vendor/swiper/swiper-bundle.min.js"></script>
+
+  <script src="static/assets/javascripts/plugins.js"></script>
+
+  <script src="static/assets/javascripts/purecounter_vanilla.js"></script>
+
+  <script src="static/assets/javascripts/validator.min.js"></script>
+
+  <script src="static/assets/javascripts/contactform.js"></script>
+
+  <script src="static/assets/javascripts/particles.min.js"></script>
+
+  <script src="static/assets/javascripts/script.js"></script>
+
+  <!-- Main JS -->
+
+  <script src="static/assets/javascripts/main.js"></script>
+
+</body>
+
+</html>
